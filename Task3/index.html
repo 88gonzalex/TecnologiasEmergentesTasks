@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galería de DBz</title>
+    <!-- Utilizo tailwindCSS para probar -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between">
+
+    <!-- cabecera -->
+    <header class="py-8 text-center bg-slate-800 shadow-md">
+        <h1 class="text-3xl font-extrabold tracking-wide text-indigo-400">Galería de Gatinhos </h1>
+        <button id="btn-cargar" class="mt-5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-6 py-2.5 rounded-xl shadow-lg transition-all duration-200 cursor-pointer active:scale-95">
+            Cargar Nuevos Gatos
+        </button>
+    </header>
+
+    <!-- Galería de fotos, va a ir en un grid -->
+    <main class="flex-grow container mx-auto px-4 py-8">
+        <!-- Estado de Carga -->
+        <div id="loading" class="hidden text-center py-20">
+            <div class="inline-block animate-spin rounded-full h-10 w-10 border-4 border-indigo-500 border-t-transparent"></div>
+            <p class="text-slate-400 mt-3 text-sm">Buscando gatitos...</p>
+        </div>
+
+        <!-- Grid de Imágenes -->
+        <div id="galeria" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <!-- Las tarjetas de imágenes se inyectarán aquí mediante JavaScript -->
+        </div>
+    </main>
+
+    <!-- Pie de página -->
+    <footer class="py-4 text-center text-xs text-slate-500 border-t border-slate-800">
+        Lab 4 - AJAX y Framework CSS
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        const API_URL = 'https://api.thecatapi.com/v1/images/search?limit=10';
+        
+        const galeria = document.getElementById('galeria');
+        const loading = document.getElementById('loading');
+        const btnCargar = document.getElementById('btn-cargar');
+
+        // Función para mostrar/ocultar el indicador de carga
+        function toggleLoading(show) {
+            if (show) {
+                loading.classList.remove('hidden');
+                galeria.innerHTML = ''; 
+            } else {
+                loading.classList.add('hidden');
+            }
+        }
+
+        // Generalmente se usa mas JSON, pero nunca trabaje con XML asi que quise probarlo
+        //al final lo parseamos de vuelta, asi que si no es necesario XML es conveniente usar JSON de una
+        function obtenerGatos() {
+            toggleLoading(true);
+
+            
+            const xhr = new XMLHttpRequest();
+
+            
+            xhr.open('GET', API_URL, true);
+
+            xhr.onreadystatechange = function () {
+                
+                if (xhr.readyState === 4) {
+                    toggleLoading(false);
+
+                    // verificamos la respuesta HTTP
+                    if (xhr.status === 200) {
+                        // un parse a JSON
+                        const data = JSON.parse(xhr.responseText);
+                        renderizarGaleria(data);
+                    } else {
+                        console.error('Error en la petición. Código:', xhr.status);
+                        galeria.innerHTML = `
+                            <div class="col-span-full text-center py-10 text-red-400">
+                                <p>!!! No se pudieron cargar las imágenes (Error ${xhr.status}). Intenta nuevamente.</p>
+                            </div>
+                        `;
+                    }
+                }
+            };
+
+            //enviamos la peticion
+            xhr.send();
+        }
+
+        // Función para renderizar los elementos en el DOM
+        function renderizarGaleria(gatitos) {
+            galeria.innerHTML = ''; //limpiamos la galeria
+
+            gatitos.forEach(gato => {
+                const card = document.createElement('div');
+                card.className = 'bg-slate-800 rounded-2xl overflow-hidden shadow-lg border border-slate-700/50 hover:border-indigo-500/50 transition-all duration-300 flex flex-col';
+
+                const img = document.createElement('img');
+                img.src = gato.url;
+                img.alt = 'Gatito tierno';
+                img.className = 'w-full h-56 object-cover bg-slate-700';
+                img.loading = 'lazy';
+
+                card.appendChild(img);
+                galeria.appendChild(card);
+            });
+        }
+
+        //evento de cuando se presiona nuevos gatos
+        btnCargar.addEventListener('click', obtenerGatos);
+
+        // cuando cargamos la pagina
+        document.addEventListener('DOMContentLoaded', obtenerGatos);
+    </script>
+</body>
+</html>
